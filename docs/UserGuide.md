@@ -53,6 +53,8 @@ and password confirmation. Registration returns to login with your username
 filled in. Password visibility checkboxes let you inspect what you typed.
 After login, the Search page opens. Every user can both buy and sell; the sidebar's
 Buying and Selling headings organise pages and do not switch account roles.
+The white navigation column fills the window height. In shorter windows, scroll
+within it to reach the remaining links.
 
 Use **My Profile** to save your display name and private preferred pickup location.
 Your username cannot be changed. **Replace Image** and **Remove Image** save
@@ -145,7 +147,10 @@ any of these ways:
 The Conversations page puts conversations with a pending offer or an active sale
 under **Offers and sales**, and the rest under **Other conversations**. Each card
 shows the listing, the other person, whether you're buying or selling, a preview,
-and how many unread items it has. Choose the listing title to open it, or
+and how many unread items it has. Click the card body, including its title, to
+open the conversation. **View Listing** opens the item; the other person's
+name/photo opens their profile. These are separate keyboard targets: Tab between
+them and use Enter or Space on the card, or Space on either button. Choose
 **Refresh** to reload the list.
 
 A conversation page shows the other person, the listing's status, and **View
@@ -204,14 +209,21 @@ sale if the handover happened. Completing the sale shows "Sale completed · Met 
 started or overlaps another of your meetups), the reason appears and nothing
 changes.
 
-The meetup also appears as one line on each active sale in **My Sales** and **My
+The meetup also appears on each active sale in **My Sales** and **My
 Purchases**, and on reserved listings in **My Listings**, for example "2 times
 offered" or "No meetup times yet". A sale's **Sale Details** page shows the same
 text as the conversation's bar. Completed sales that had a meetup show where you
 met ("Met on ...").
-Listing cards retain their status and pending-offer footer above the meetup
-summary. Long summaries are shortened with an ellipsis to fit the fixed card;
-open the sale or its conversation to read the full meetup details.
+Every **My Listings** card has the same taller height, reserving a meetup area
+below its status and pending-offer count even when there is no summary. Booked
+meetups show the date and time separately, including both dates for an overnight
+meetup. Places use up to two lines; only oversized places end with an ellipsis.
+Open the sale or its conversation for full details. Search and public-profile
+cards keep their compact size.
+
+**Sale Details** groups the item, agreed price, and other participant on the left
+and status, meetup, and actions on the right. Narrow windows stack these sections;
+scroll down to reach all information and actions.
 
 ## Feedback and unfinished features
 
@@ -353,8 +365,9 @@ only the sale's buyer and seller can see or act on its meetup.
   You can confirm completion with or without a meetup. A meetup whose time has
   passed stays booked, and the next step becomes "Did the handover happen?
   Confirm completion".
-- Each sale in My Sales and My Purchases, and each reserved listing, shows its
-  offered times or booked meetup as one line.
+- Each sale in My Sales and My Purchases shows a meetup summary. Reserved
+  listings show offered-time counts or booked dates, times, and place in their
+  dedicated meetup area.
 - Every refused action explains what went wrong, for example: "The seller
   already has a meetup from Fri 25 Sep, 3:00 PM to Fri 25 Sep, 3:30 PM. Choose a
   different time."

@@ -134,9 +134,16 @@
 }
 .listing-card:hover { -fx-background-color: #ffffff; -fx-border-color: -hotshop-accent; }
 .listing-card:armed { -fx-background-color: -hotshop-soft; }
+.conversation-card { -fx-cursor: hand; }
+.conversation-card:hover { -fx-border-color: -hotshop-accent; }
+.conversation-card:focused {
+    -fx-border-color: -hotshop-accent;
+    -fx-border-style: segments(3, 2);
+}
 .listing-card-title { -fx-font-size: 16px; -fx-font-weight: bold; }
 .listing-card-footer { -fx-font-size: 12px; -fx-text-fill: -hotshop-muted; }
 .scroll-pane, .scroll-pane > .viewport { -fx-background-color: transparent; }
+.navigation, .navigation > .viewport { -fx-background-color: #ffffff; }
 .text-field, .text-area, .combo-box {
     -fx-background-color: #ffffff;
     -fx-background-insets: 0;

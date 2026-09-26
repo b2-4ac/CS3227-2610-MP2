@@ -61,8 +61,9 @@ No new library is required.
 The shared `hotshop/styles.css` defines the warm light palette and shadow-free
 control states. Form and confirmation dialogs attach the same stylesheet to their
 dialog panes; the startup-error dialog also uses it. Keep popup and keyboard-focus
-styles consistent when adding controls. `ListingCards` fixes card dimensions at
-240 x 304 layout units and reserves two title lines; the wrapping grid changes
+styles consistent when adding controls. `ListingCards` fixes buyer cards at
+240 x 304 and My Listings cards at 240 x 432 layout units, preserving the
+208 x 130 image frame and 52-unit title area. The wrapping grid changes
 column count instead of stretching cards. Existing owner-listing responses supply
 the status and pending-offer footer, while buyer cards show condition.
 Chat unread badges, offer-bar borders, and message bubbles reuse the shared
@@ -135,12 +136,27 @@ place) and the offered-times list with Book or Withdraw. Every action calls
 MeetupService and then reloads the conversation. For an active sale the page
 loads `getMeetupSummary`; for a completed sale it uses the `MeetupSummary` on the
 matching `SaleForParticipant`. Sale Details shows the bar's text for an active
-sale; My Sales, My Purchases, and reserved My Listings cards show
+sale; My Sales and My Purchases show
 `MeetupBar.summary`; and the Dashboard shows
 `SalesDashboard.upcomingMeetups`. There is no separate meetup page, so the old
 "Meetups" and "Availability & Meetups" sidebar entries are gone.
-Reserved listing cards keep the existing status/offer-count footer and append
-the meetup summary within the fixed 240 x 304 card dimensions.
+Seller cards reserve a 120-unit meetup area below the status/offer-count footer.
+`ListingCards` reads the existing `MeetupSummary` directly: booked dates (two
+lines overnight), 24-hour times, and a 40-unit two-line place label. Only the
+place can truncate. The grid computes row height from its fixed-size children.
+
+`ChatPages` gives each conversation card a focusable body with Enter/Space
+activation and a plain title. View Listing and profile buttons remain separate
+focus targets; the body's event handlers exclude descendant buttons. Both
+conversation groups share this presentation and retain service ordering.
+
+`SalePages` places item context and sale progress in a `GridPane`. At 720 units of
+available content width the groups use equal columns; below that they stack.
+The enclosing page scrolls, preserving all sale actions and confirmation flows.
+The navigation ScrollPane fits its content to height while retaining the links'
+preferred minimum height for scrolling, and its viewport has a white background.
+The conversation's meetup bar places its wrapping full summary above a wrapping
+action row, so long places do not truncate the summary or the action buttons.
 
 `ListingService.getPublicListings(UUID)` requires login and returns only the
 selected user's available listings, newest first, with restricted public-profile

@@ -227,7 +227,11 @@ public final class MarketplaceUi {
                 nav("My Profile", "profile", () -> accounts.profile(userId)),
                 UiControls.button("Log out", "nav-logout", this::logout));
         ScrollPane sidebar = new ScrollPane(links);
+        sidebar.setId("navigation");
+        sidebar.getStyleClass().add("navigation");
         sidebar.setFitToWidth(true);
+        sidebar.setFitToHeight(true);
+        links.setMinHeight(VBox.USE_PREF_SIZE);
         sidebar.setPrefWidth(245);
         sidebar.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         return sidebar;
