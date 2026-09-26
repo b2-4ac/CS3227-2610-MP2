@@ -1,6 +1,8 @@
 package hotshop.ui;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.awt.image.BufferedImage;
@@ -24,6 +26,7 @@ import hotshop.ApplicationRuntime;
 import hotshop.model.Category;
 import hotshop.model.Condition;
 import hotshop.service.ListingDraft;
+import hotshop.service.ListingPhoto;
 import javafx.application.Platform;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -31,6 +34,7 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.control.Labeled;
 import javafx.scene.control.TextInputControl;
 import javafx.scene.image.PixelFormat;
+import javafx.scene.image.ImageView;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 
@@ -190,6 +194,174 @@ class MarketplaceUiTest {
     }
 
     @Test
+    void listingCards_portraitAndLandscapePhotos_fitWholeImagesWithinCards() throws Exception {
+        seedListing();
+        runtime.getAccounts().login("seller", "Sample1!").join();
+        for (int width : List.of(80, 320)) {
+            BufferedImage photo = new BufferedImage(width, 160, BufferedImage.TYPE_INT_RGB);
+            var graphics = photo.createGraphics();
+            graphics.setColor(java.awt.Color.ORANGE);
+            graphics.fillRect(0, 0, width, 160);
+            graphics.setColor(java.awt.Color.BLUE);
+            graphics.drawRect(0, 0, width - 1, 159);
+            graphics.dispose();
+            Path path = directory.resolve("photo-" + width + ".png");
+            ImageIO.write(photo, "png", path.toFile());
+            runtime.getListings().createListing(new ListingDraft("Photo " + width, "Description",
+                    Category.FURNITURE, 4500, Condition.GOOD, "Campus"), List.of(ListingPhoto.add(path))).join();
+        }
+        runtime.getAccounts().logout().join();
+        login("buyer");
+        click("search-submit");
+        awaitText("results-count", "3 listings");
+        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(10);
+        while (fx(() -> stage.getScene().getRoot().lookupAll(".image-view").size() < 2)
+                && System.nanoTime() < deadline) {
+            Thread.sleep(25);
+        }
+        awaitReady();
+        fx(() -> {
+            int photos = 0;
+            for (var node : stage.getScene().getRoot().lookupAll("#listing-card")) {
+                Button card = (Button) node;
+                var image = card.lookup(".image-view");
+                if (image instanceof ImageView view) {
+                    photos++;
+                    var bounds = view.getBoundsInLocal();
+                    double expectedRatio = card.getAccessibleText().startsWith("Photo 80") ? 0.5 : 2;
+                    assertEquals(expectedRatio, bounds.getWidth() / bounds.getHeight(), 0.01);
+                    assertTrue(bounds.getWidth() <= 208 && bounds.getHeight() <= 130);
+                    assertEquals((208 - bounds.getWidth()) / 2, view.getBoundsInParent().getMinX(), 1);
+                    assertEquals((130 - bounds.getHeight()) / 2, view.getBoundsInParent().getMinY(), 1);
+                    assertNull(view.getViewport());
+                    assertNull(view.getClip());
+                }
+            }
+            assertEquals(2, photos);
+            return null;
+        });
+        snapshot("cards-photos", 1400, 900);
+    }
+
+    @Test
+    void listingCards_titlesWithinAndBeyondTwoLines_onlyTruncateOverflow() throws Exception {
+        seedListing();
+        String twoLines = "A comfortable wooden chair for studying";
+        String overflowing = "Long title ".repeat(10).strip();
+        runtime.getAccounts().login("seller", "Sample1!").join();
+        for (String title : List.of(twoLines, overflowing, "W".repeat(120))) {
+            runtime.getListings().createListing(new ListingDraft(title, "Description", Category.FURNITURE,
+                    4500, Condition.GOOD, "Campus"), List.of()).join();
+        }
+        runtime.getAccounts().logout().join();
+        login("buyer");
+        click("search-submit");
+        awaitText("results-count", "4 listings");
+        awaitReady();
+        fx(() -> {
+            var titles = stage.getScene().getRoot().lookupAll(".listing-card-title");
+            assertEquals(4, titles.size());
+            for (var node : titles) {
+                Label title = (Label) node;
+                var rendered = (javafx.scene.text.Text) title.lookup(".text");
+                String visible = rendered.getText().replace("\n", " ");
+                if (title.getText().equals(overflowing) || title.getText().length() == 120) {
+                    assertTrue(visible.endsWith("..."), visible);
+                    assertTrue(rendered.getLayoutBounds().getHeight() > 30, "Overflow must use both lines");
+                } else {
+                    assertEquals(title.getText(), visible);
+                }
+                assertTrue(rendered.getLayoutBounds().getHeight() <= title.getHeight());
+            }
+            return null;
+        });
+        snapshot("cards-titles", 1400, 900);
+    }
+
+    @Test
+    void listingCards_buyerAndOwner_showRelevantMetadata() throws Exception {
+        seedListing();
+        runtime.getAccounts().login("buyer", "Sample1!").join();
+        var listing = runtime.getListings().searchListings(hotshop.service.ListingSearch.all()).join().getFirst();
+        runtime.getOffers().submitOffer(listing.listing().getId(), 4000).join();
+        runtime.getAccounts().logout().join();
+        login("buyer");
+        click("search-submit");
+        awaitText("results-count", "1 listing");
+        assertCardMetadata(List.of("Good"), List.of("Available", "1 pending offer", "1 pending offers"));
+        click("listing-card");
+        awaitReady();
+        click("seller-profile");
+        awaitText("profile-name", "Seller");
+        awaitReady();
+        assertCardMetadata(List.of("Good"), List.of("Available", "1 pending offer", "1 pending offers"));
+        switchUser("seller");
+        click("nav-listings");
+        awaitReady();
+        assertCardMetadata(List.of("Available", "1 pending offer"), List.of("Good"));
+        snapshot("cards-owner-minimum", 960, 640);
+        click("listing-card");
+        awaitReady();
+        confirm("accept-offer", "Accept Offer");
+        awaitText("page-title", "Sale Details");
+        awaitReady();
+        click("nav-listings");
+        awaitReady();
+        assertCardMetadata(List.of("Reserved", "0 pending offers"), List.of("Good", "Available"));
+    }
+
+    private void assertCardMetadata(List<String> expected, List<String> absent) throws Exception {
+        fx(() -> {
+            Button card = (Button) stage.getScene().lookup("#listing-card");
+            var labels = card.getGraphic().lookupAll(".label").stream()
+                    .map(node -> ((Label) node).getText()).toList();
+            expected.forEach(text -> assertTrue(labels.contains(text), "Missing card information: " + text));
+            absent.forEach(text -> assertFalse(labels.contains(text), "Unexpected card information: " + text));
+            return null;
+        });
+    }
+
+    @Test
+    void listingCards_mixedTitlesAndWindowSizes_keepUniformSizeAndReflow() throws Exception {
+        seedListing();
+        runtime.getAccounts().login("seller", "Sample1!").join();
+        for (String title : List.of("A comfortable wooden chair for studying", "Long title ".repeat(10), "Lamp")) {
+            runtime.getListings().createListing(new ListingDraft(title, "Description", Category.FURNITURE,
+                    4500, Condition.GOOD, "Campus"), List.of()).join();
+        }
+        runtime.getAccounts().logout().join();
+        login("buyer");
+        click("search-submit");
+        awaitText("results-count", "4 listings");
+        snapshot("cards-minimum", 960, 640);
+        double height = fx(() -> {
+            var cards = stage.getScene().getRoot().lookupAll("#listing-card");
+            double firstHeight = ((Button) cards.iterator().next()).getHeight();
+            assertTrue(firstHeight < 350, "Cards should remain compact even with a maximum-length title");
+            for (var node : cards) {
+                Button card = (Button) node;
+                assertEquals(240, card.getWidth(), 0.1);
+                assertEquals(firstHeight, card.getHeight(), 0.1);
+            }
+            assertEquals(2, cards.stream().map(node -> node.getLayoutY()).distinct().count());
+            return firstHeight;
+        });
+        snapshot("cards-wide", 1400, 900);
+        fx(() -> {
+            stage.getScene().getRoot().applyCss();
+            stage.getScene().getRoot().layout();
+            var cards = stage.getScene().getRoot().lookupAll("#listing-card");
+            for (var node : cards) {
+                Button card = (Button) node;
+                assertEquals(240, card.getWidth(), 0.1);
+                assertEquals(height, card.getHeight(), 0.1);
+            }
+            assertEquals(1, cards.stream().map(node -> node.getLayoutY()).distinct().count());
+            return null;
+        });
+    }
+
+    @Test
     void editListing_changedDetails_confirmsAndRejectsPendingOffers() throws Exception {
         seedListing();
         runtime.getAccounts().login("buyer", "Sample1!").join();
@@ -243,6 +415,19 @@ class MarketplaceUiTest {
         click("nav-profile");
         awaitReady();
         click("change-password");
+        fx(() -> {
+            var scene = Window.getWindows().stream().filter(window -> window != stage && window.isShowing())
+                    .findFirst().orElseThrow().getScene();
+            scene.getRoot().applyCss();
+            scene.getRoot().layout();
+            var pane = (javafx.scene.control.DialogPane) scene.getRoot();
+            assertEquals(javafx.scene.paint.Color.web("#faf7f2"), pane.getBackground().getFills().getFirst().getFill());
+            assertNull(pane.getEffect());
+            Button submit = (Button) scene.lookup("#dialog-submit");
+            assertEquals(submit.getText(), ((javafx.scene.text.Text) submit.lookup(".text")).getText());
+            saveSnapshot("password-dialog", scene);
+            return null;
+        });
         dialogType("current-password", "Sample1!");
         dialogType("password", "Different1!");
         dialogType("confirm-password", "Different1!");
@@ -373,6 +558,11 @@ class MarketplaceUiTest {
                         window.getScene().getRoot().applyCss();
                         for (var node : window.getScene().getRoot().lookupAll(".button")) {
                             if (node instanceof Button button && button.getText().equals(action)) {
+                                if (action.equals("Accept Offer")) {
+                                    window.getScene().getRoot().layout();
+                                    assertEquals(action, ((javafx.scene.text.Text) button.lookup(".text")).getText());
+                                    saveSnapshot("confirmation-dialog", window.getScene());
+                                }
                                 button.fire();
                                 return true;
                             }
@@ -430,7 +620,8 @@ class MarketplaceUiTest {
             return null;
         });
         long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(10);
-        while (fx(() -> stage.getScene().getWidth() > width || stage.getScene().getHeight() > height)) {
+        while (fx(() -> stage.getScene().getWidth() > width || stage.getScene().getWidth() < width - 40
+                || stage.getScene().getHeight() > height || stage.getScene().getHeight() < height - 80)) {
             if (System.nanoTime() >= deadline) {
                 throw new AssertionError("Window did not resize to the requested dimensions");
             }
@@ -439,19 +630,23 @@ class MarketplaceUiTest {
         fx(() -> {
             stage.getScene().getRoot().applyCss();
             stage.getScene().getRoot().layout();
-            var image = stage.getScene().snapshot(null);
-            int imageWidth = (int) image.getWidth();
-            int imageHeight = (int) image.getHeight();
-            int[] pixels = new int[imageWidth * imageHeight];
-            image.getPixelReader().getPixels(0, 0, imageWidth, imageHeight,
-                    PixelFormat.getIntArgbInstance(), pixels, 0, imageWidth);
-            BufferedImage output = new BufferedImage(imageWidth, imageHeight, BufferedImage.TYPE_INT_ARGB);
-            output.setRGB(0, 0, imageWidth, imageHeight, pixels, 0, imageWidth);
-            Path folder = Path.of("build", "ui-checks");
-            Files.createDirectories(folder);
-            ImageIO.write(output, "png", folder.resolve(name + ".png").toFile());
+            saveSnapshot(name, stage.getScene());
             return null;
         });
+    }
+
+    private void saveSnapshot(String name, javafx.scene.Scene scene) throws Exception {
+        var image = scene.snapshot(null);
+        int imageWidth = (int) image.getWidth();
+        int imageHeight = (int) image.getHeight();
+        int[] pixels = new int[imageWidth * imageHeight];
+        image.getPixelReader().getPixels(0, 0, imageWidth, imageHeight,
+                PixelFormat.getIntArgbInstance(), pixels, 0, imageWidth);
+        BufferedImage output = new BufferedImage(imageWidth, imageHeight, BufferedImage.TYPE_INT_ARGB);
+        output.setRGB(0, 0, imageWidth, imageHeight, pixels, 0, imageWidth);
+        Path folder = Path.of("build", "ui-checks");
+        Files.createDirectories(folder);
+        ImageIO.write(output, "png", folder.resolve(name + ".png").toFile());
     }
 
     private void type(String id, String value) throws Exception {

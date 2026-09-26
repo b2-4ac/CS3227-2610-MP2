@@ -19,6 +19,9 @@ HotShop opens the **Log in** page in an 1100 by 750 window. The minimum window
 size is 960 by 640 (JavaFX layout units). Pages and the sidebar scroll when
 needed; listing grids wrap to fewer columns in narrower windows.
 
+Pages and dialogs use a warm light theme with ivory backgrounds, white panels,
+burnt-orange accents, and no shadows. Keyboard focus is shown with an outline.
+
 Startup creates or opens a local database and image folder at `.hotshop` in your
 home directory. Accounts, listings, offers, and images in that folder survive
 application restarts. Only one HotShop instance may use the same folder at a time.
@@ -73,11 +76,17 @@ submitted search, sorting, and scroll position. A new login resets search.
 
 For example, search for `desk`, choose Furniture, and set a maximum price of
 `50.00`. Matching listing cards show a photo or placeholder, title, asking price,
-condition, and status. Open a card to see all photos, the description, category,
+and condition. Open a card to see all photos, the description, status, category,
 condition, pickup location, and seller profile link. No matches and failed loads
 have different messages; a failed load offers **Retry**.
 
-Under Selling, **My Listings** shows your listings and pending-offer counts.
+Listing cards stay the same size when the window is resized: wider windows fit
+more cards per row. Cards have aligned rows and prices, with two lines reserved
+for the title. Titles that exceed two lines end with an ellipsis; open the card
+to read the full title. Photos fit completely inside their frames without cropping.
+
+Under Selling, **My Listings** shows your listings, status, and pending-offer counts;
+condition is available on the detail page instead of these owner cards.
 Choose **Create Listing**, enter the details, and optionally use **Add Photo**.
 Photo previews have **Move Up**, **Move Down**, and **Remove** controls. New listings
 prefill your preferred pickup location, which you can change for that listing.

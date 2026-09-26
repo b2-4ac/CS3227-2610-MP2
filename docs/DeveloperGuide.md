@@ -58,6 +58,14 @@ history, session reset, and unsaved-change guards. Feature page classes construc
 JavaFX controls programmatically; the old welcome-only FXML resource was removed.
 No new library is required.
 
+The shared `hotshop/styles.css` defines the warm light palette and shadow-free
+control states. Form and confirmation dialogs attach the same stylesheet to their
+dialog panes; the startup-error dialog also uses it. Keep popup and keyboard-focus
+styles consistent when adding controls. `ListingCards` fixes card dimensions at
+240 x 304 layout units and reserves two title lines; the wrapping grid changes
+column count instead of stretching cards. Existing owner-listing responses supply
+the status and pending-offer footer, while buyer cards show condition.
+
 `UiPage` owns loading, duplicate-submission protection, retry, and safe error
 display. It uses service futures and `Platform.runLater`; it never blocks the FX
 thread on a service future. Page callbacks verify that their page is still current.

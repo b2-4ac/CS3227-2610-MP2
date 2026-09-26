@@ -80,3 +80,31 @@ Individual recommendations Q1-Q28 and the consolidated scope were confirmed. Imp
 - JUnit tests exercise service boundaries, search state, and actual JavaFX workflows
   using temporary databases. Screenshots are generated under `build/ui-checks/`.
 - Exact branding and unfinished-feature screen internals remain deferred as agreed.
+
+## Visual refresh interview (2026-09-26)
+
+The user confirmed this specification by requesting `$implement this` after the
+consolidated design. The visual refresh implements the following decisions:
+
+- Use warm minimalism and a light-only theme.
+- Apply the theme across all implemented pages.
+- Preserve the current navigation structure and project functionality.
+- Use ivory backgrounds, white cards, charcoal text, burnt-orange accents,
+  subtle borders, and gently rounded corners. Do not use shadows.
+- Listing cards have fixed dimensions and uniform heights with aligned rows.
+  Resizing the window changes how many cards fit in a row, not card dimensions.
+  Cards must not stretch vertically to fill available page space.
+- Show the listing image followed by its title and price. Reserve two lines for
+  titles; truncate with an ellipsis only when the title exceeds that space.
+- Preserve the entire listing image's aspect ratio within a consistent frame,
+  using a soft neutral background for unused space rather than cropping.
+- Keep cards 240 JavaFX layout units wide.
+- When viewing their own listing cards, sellers see listing status and the
+  pending-offer count; condition need not be shown on these cards.
+- Buyers see condition on other sellers' listing cards. Condition is the buyer
+  card footer; status and pending offers form the owner's card footer.
+
+Cards are 240 x 304 JavaFX layout units, including a 208 x 130 image frame and a
+52-unit title area. Existing dialogs and interaction states use the shared theme.
+These card presentation decisions supersede the original summary-card styling
+above; existing workflow decisions remain in effect.

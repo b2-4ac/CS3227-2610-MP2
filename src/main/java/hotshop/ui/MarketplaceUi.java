@@ -141,6 +141,8 @@ public final class MarketplaceUi {
         ButtonType accept = new ButtonType(action, ButtonData.OK_DONE);
         Alert alert = new Alert(Alert.AlertType.CONFIRMATION, consequence, ButtonType.CANCEL, accept);
         alert.initOwner(stage);
+        UiDialogs.theme(this, alert);
+        alert.setGraphic(null);
         alert.setTitle(action);
         alert.setHeaderText(action + "?");
         alert.getDialogPane().setId("confirmation-dialog");
