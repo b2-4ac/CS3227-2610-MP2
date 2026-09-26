@@ -128,7 +128,8 @@ on the machine's time zone.
 
 The screens read the meetup limits from their owners rather than copying them:
 `MeetupService.MAX_OFFERED_SLOTS`, `MeetupService.MAX_DAYS_AHEAD`, and
-`MeetupTime.MAX_LOCATION_LENGTH`. Both bars are built with `UiControls.bar`.
+`MeetupTime.MAX_LOCATION_LENGTH`. The offer bar uses `UiControls.bar`; the
+meetup bar uses a wrapping summary and action row in `MeetupPages`.
 
 `MeetupPages` builds the bar and owns the dialogs: the time dialog (date picker
 limited to today through 60 days ahead, 15-minute start times, fixed lengths,
