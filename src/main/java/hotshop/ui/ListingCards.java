@@ -33,6 +33,11 @@ final class ListingCards {
     }
 
     static Button card(MarketplaceUi app, ListingWithSeller value, Integer pending) {
+        return card(app, value, pending, null);
+    }
+
+    /** A card with an optional extra line, such as a reserved listing's meetup summary. */
+    static Button card(MarketplaceUi app, ListingWithSeller value, Integer pending, String meetupSummary) {
         var listing = value.listing();
         Supplier<Path> image = listing.getImages().isEmpty() ? null
                 : () -> app.runtime.getListingImagePath(listing.getImages().getFirst().filename());
@@ -58,6 +63,11 @@ final class ListingCards {
                     "listing-card-footer"));
         }
         details.getChildren().add(footer);
+        if (meetupSummary != null) {
+            var line = UiControls.label(meetupSummary, "muted");
+            line.setId("listing-meetup-summary");
+            details.getChildren().add(line);
+        }
         Button card = UiControls.button("", "listing-card",
                 () -> app.navigate(() -> app.listings.details(listing.getId())));
         card.setAccessibleText(listing.getDetails().title() + ", "
